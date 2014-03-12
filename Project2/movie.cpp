@@ -6,7 +6,7 @@
 #include<unordered_map>
 using namespace std;
 
-
+int test = 0;
 
 struct ratings{
 	ratings(){}
@@ -22,25 +22,25 @@ unordered_map<string, int> MovieGenreMap;
 
 struct userData{
 	userData(){};
-	userData(int m_userID, int m_age, int m_gender, vector<double>& m_perference, double m_average, double m_variant) :userID(m_userID), age(m_age), gender(m_gender), perference(m_perference),
+	userData(int m_userID, int m_age, int m_gender, vector<double>& m_preference, double m_average, double m_variant) :userID(m_userID), age(m_age), gender(m_gender), preference(m_preference),
 	average(m_average), variant(m_variant){}
 	       
 	int userID;
 	int age;
 	int gender;        //0 is male, 1 is female;
-	vector<double> perference;
+	vector<double> preference;
 	double average;
 	double variant;
 };
 
 struct movieData{
 	movieData(){};
-	movieData(int m_movieID, string m_title, int m_year, vector<int>& m_genre, int m_rating) :movieID(m_movieID), genre(m_genre), title(m_title), year(m_year), rating(m_rating){}
+	movieData(int m_movieID, string m_title, int m_year, vector<int>& m_genre, double m_rating) :movieID(m_movieID), genre(m_genre), title(m_title), year(m_year), rating(m_rating){}
 	int movieID;
 	vector<int> genre;
 	string title;
 	int year;
-	int rating;
+	double rating;
 };
 void buildMovieGenereMap(){
 	int count = 0;
@@ -53,16 +53,16 @@ void buildMovieGenereMap(){
 	MovieGenreMap.insert(pair<string, int>("Documentary", count++));
 	MovieGenreMap.insert(pair<string, int>("Drama", count++));
 	MovieGenreMap.insert(pair<string, int>("Fantasy", count++));
-	MovieGenreMap.insert(pair<string, int>("Film_Noir", count++));
+	MovieGenreMap.insert(pair<string, int>("Film-Noir", count++));
 	MovieGenreMap.insert(pair<string, int>("Horror", count++));
 	MovieGenreMap.insert(pair<string, int>("Musical", count++));
 	MovieGenreMap.insert(pair<string, int>("Mystery", count++));
 	MovieGenreMap.insert(pair<string, int>("Romance", count++));
-	MovieGenreMap.insert(pair<string, int>("Sci_Fi", count++));
+	MovieGenreMap.insert(pair<string, int>("Sci-Fi", count++));
 	MovieGenreMap.insert(pair<string, int>("Thriller", count++));
 	MovieGenreMap.insert(pair<string, int>("War", count++));
 	MovieGenreMap.insert(pair<string, int>("Western", count++));
-
+	
 }
 
 int getUserID(string& s){
@@ -125,12 +125,16 @@ int getMovieID2(string& s){
 string getMovieTitle(string& s){
 	int i = 0;
 	int size = s.size();
-	while (i < size && s[i] != '('){
-		i++;
-	}
-
-	string result = s.substr(0, i);
-	s = s.substr(i + 1, size - i);
+	while (i < size){
+		if (i>0 && i < size - 1 && (s[i-1]=='(' && s[i] <= '9' && s[i] >= '0' && s[i + 1] <= '9' && s[i + 1] >= '0')){
+			break;
+		}
+		else{
+			i++;
+		}
+	} 
+	string result = s.substr(0, i-2);
+	s = s.substr(i, size - i+1);
 	return result;
 	
 }
@@ -141,16 +145,17 @@ int getMovieYear(string& s){
 		i++;
 	}
 	string resultString = s.substr(0, i);
+	s = s.substr(i + 3, size - i - 2);
 	int result = atoi(resultString.c_str());
 	return result;
 }
 
 vector<int> getMovieType(string& s){
 	vector<int> result;
-	int size = s.size();
+	
 	int i = 0;
 	unordered_map<string, int> ::iterator it;
-	while(i < size){
+	while(i < s.size()){
 		string toBeInserted;
 		if (s[i] != '|'){
 			i++;
@@ -159,8 +164,15 @@ vector<int> getMovieType(string& s){
 			toBeInserted = s.substr(0, i);
 			s = s.substr(i + 1, s.size() - i);
 			it = MovieGenreMap.find(toBeInserted);
+			if (test){
+				cout << toBeInserted<<endl;
+			}
 			result.push_back(it->second);
+			i = 0;
 		}
+	}
+	if (test){
+		cout << s << endl;
 	}
 	it = MovieGenreMap.find(s);
 	result.push_back(it->second);
@@ -215,6 +227,11 @@ void initializeUserIDArr(){
 		rating = getRating(line);
 		timeStamp = getTimeStamp(line);
 		ratingArr[i++] = ratings(newID, movieID, rating, timeStamp);
+		//if (newID == 11){
+			//	break;
+		//}
+		
+		
 
 	}
 	userIDArr[6039] = count;
@@ -240,7 +257,7 @@ void initializeRatingMatrix(){
 	int startPoint = 0;
 	int endPoint = 0;
 	int k = 0;
-	for (int i = 0; i <ROW; i++){
+	for (int i = 0; i <ROW; i++){                   //mark
 		int j = 0;
 		startPoint = endPoint;
 		endPoint += userIDArr[i];
@@ -248,9 +265,15 @@ void initializeRatingMatrix(){
 		for (; j < userIDArr[i] * 0.8; j++){
 
 			ratingMatrix[i][ratingArr[k].movieID - 1] = ratingArr[k].rating;
-			cout << "userID: " << i << "rating: " << ratingMatrix[ratingArr[k].userID - 1][ratingArr[k].movieID - 1];
+			if (test){
+				cout << "userID: " << i << "rating: " << ratingMatrix[ratingArr[k].userID - 1][ratingArr[k].movieID - 1];
+			}
+			
 			timeStampMatrix[i][ratingArr[k].movieID - 1] = ratingArr[k].timeStamp;
-			cout << " time stamp:" << timeStampMatrix[ratingArr[k].userID - 1][ratingArr[k].movieID - 1] << endl;
+			if (test){
+				cout << " time stamp:" << timeStampMatrix[ratingArr[k].userID - 1][ratingArr[k].movieID - 1] << endl;
+			}
+			
 			k++;
 		}
 		for (; j < userIDArr[i]; j++){
@@ -260,16 +283,17 @@ void initializeRatingMatrix(){
 
 }
 
-int getMovieRating(int movieID){
+double getMovieRating(int movieID){
 	int total = 0;
 	int count = 0;
 	for (int i = 0; i < 6040; i++){
-		if (ratingMatrix[i][movieID] != -1){
-			total += ratingMatrix[i][movieID];
+		if (ratingMatrix[i][movieID-1] != -1){
+			total += ratingMatrix[i][movieID-1];
 			count++;
 		}
 		
 	}
+	if (count == 0) return total;
 	return total / count;
 }
 
@@ -277,16 +301,26 @@ void initializeMovieArr(){
 	ifstream fin;
 	string line;
 	fin.open("movies.dat");
-	int i = 0;
+	
+	buildMovieGenereMap();
+	
 	while (getline(fin, line)){
+		
 		int movieID = getMovieID2(line);
+		if (test){
+			cout << movieID << ":";
+		}
 		string movieTitle = getMovieTitle(line);
-		vector<int> movieType = getMovieType(line);
 		int year = getMovieYear(line);
-		int averageRating = getMovieRating(movieID);
-		movieArr[i++] = movieData(movieID, movieTitle, year, movieType, averageRating);
+
+		vector<int> movieType = getMovieType(line);
+		
+		double averageRating = getMovieRating(movieID);
+		movieArr[movieID-1] = movieData(movieID, movieTitle, year, movieType, averageRating);
+		
 
 	}
+
 	fin.close();
 }
 
@@ -302,7 +336,14 @@ int getUserID2(string& s){
 	return result;
 }
 int getGender(string& s){
-	int result = atoi(s.substr(0, 1).c_str());
+	int result;
+	if (s[0] == 'F'){
+		result = 1;
+	}
+	if (s[0] == 'M'){
+		result = 0;
+	}
+	
 	s = s.substr(3,s.size()-2);
 	return result;
 }
@@ -323,16 +364,15 @@ int getAge(string& s){
 vector<double> getPreference(int userID){
 	unordered_map<int, int> hash_map;
 	unordered_map<int, int> ::iterator it;
-	for (int i = 0; i < 3090; i++){
-		if (ratingMatrix[userID][i] != -1){
-			for (int j = 0l; j < movieArr[i].genre.size(); j++){
-				it = hash_map.find(movieArr[i].genre[j]);
-				if (it != hash_map.end()){
-					it->second++;
-				}
-				else{
-					hash_map.insert(pair<int, int>(movieArr[i].genre[j], 1));
-				}
+	int count = 0;
+	while (count < 18){
+		hash_map.insert(pair<int, int>(count, 0));    //?? hash_map[0]=pair(8, 0);
+		count++;
+	}
+	for (int i = 0; i <COL; i++){
+		if (ratingMatrix[userID-1][i] != -1){
+			for (int j = 0; j < movieArr[i].genre.size(); j++){
+				hash_map.find(movieArr[i].genre[j])->second++;
 			}
 		}
 	}
@@ -342,7 +382,7 @@ vector<double> getPreference(int userID){
 	}
 	vector<double> result;
 	for (it = hash_map.begin(); it != hash_map.end(); it++){
-		result.push_back(it->second / total);
+		result.push_back( (double)(it->second)/ (double)(total));
 	}
 	return result;
 
@@ -354,9 +394,9 @@ void getAverage(int userID, double& average, double& variant){
 	vector<int> ratings;
 	for (int i = 0; i < 3900; i++){
 		
-		if (ratingMatrix[userID][i] != -1){
-			total += ratingMatrix[userID][i];
-			ratings.push_back(ratingMatrix[userID][i]);
+		if (ratingMatrix[userID-1][i] != -1){
+			total += ratingMatrix[userID-1][i];
+			ratings.push_back(ratingMatrix[userID-1][i]);
 			count++;
 
 		}
@@ -371,9 +411,13 @@ void getAverage(int userID, double& average, double& variant){
 void initializeUserDataArr(){
 	ifstream fin;
 	string line;
-	fin.open("user.dat");
+	fin.open("users.dat");
+	if (fin.is_open()){
+		cout << "user.data opened";
+	}
 	int i = 0;
 	while (getline(fin, line)){
+		
 		int userID = getUserID2(line);
 		int gender = getGender(line);
 		int age = getAge(line);
@@ -382,6 +426,13 @@ void initializeUserDataArr(){
 		double variant;
 		getAverage(userID, average, variant);
 		userArr[i++] = userData(userID, gender, age, preference, average, variant);
+		if (test){
+			cout << "userID: " <<userID << "gender: " <<gender<< "age: "<<age<<" " <<"perference: ";
+			for (int i = 0; i < preference.size(); i++){
+				cout << preference[i] << ",";
+			}
+			cout <<"average: "<<average << "variant :" << variant << endl;
+		}
 
 	}
 
@@ -392,7 +443,7 @@ int main()
 {
 	initializeRatingMatrix();
 	initializeMovieArr();
-	initializeUserDataArr;
+	initializeUserDataArr();
 
 
 	
