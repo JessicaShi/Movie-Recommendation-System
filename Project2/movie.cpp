@@ -442,11 +442,11 @@ void initializeUserDataArr(){
 int main()
 {
 	initializeRatingMatrix();
+	cout << "ratingMatrix successfully initialized" << endl;
 	initializeMovieArr();
+	cout << "MovieArr successfully initialized" << endl;
 	initializeUserDataArr();
+	cout << "UserDataArr successfully initialized" << endl;
 
-
-	
-	
 	cin.get();
 }
