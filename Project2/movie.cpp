@@ -189,6 +189,7 @@ ratings ratingArr[1000209];  //helper array
 movieData movieArr[3900];   //store all the 3900 movies information
 userData userArr[6040];    
 int userIDArr[6040];       //store the number of movies each user watched
+int ratingMatrixPrediction[ROW][COL]; 
 
 void initializeUserIDArr(){
 	ifstream fin;
@@ -277,6 +278,8 @@ void initializeRatingMatrix(){
 			k++;
 		}
 		for (; j < userIDArr[i]; j++){
+			ratingMatrixPrediction[i][ratingArr[k].movieID - 1] = ratingArr[k].rating;
+			timeStampMatrix[i][ratingArr[k].movieID - 1] = ratingArr[k].timeStamp; 
 			k++;
 		}
 	}
