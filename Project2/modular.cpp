@@ -1,12 +1,24 @@
 #include <iostream>
-#include "modular.h"
+#include "movie.h"
 using namespace std;
+struct CF_candidate_t
+{
+	int mid;
+	int score;
+	int date;
+};
+struct movie_candidate_t
+{
+	int mid;
+	float score;
+	int year;
+};
 
-int total_user;
-int total_movie;
-int total_rating;
-int total_preference;
-int output_size;
+struct output_list_t
+{
+	int mid;
+	float score;
+};
 
 int sqr(int num)
 {
@@ -24,8 +36,8 @@ int min(int a ,int b)
 int cmp(const void *a, const void *b)
 {
 	CF_candidate_t *x,*y;
-	x = *(CF_candidate_t *)a;
-	y = *(CF_candidate_t *)b;
+	x = *(CF_candidate_t **)a;
+	y = *(CF_candidate_t **)b;
 	
 	if(x->score!=y->score)
 		return x->score - y->score;
@@ -33,43 +45,7 @@ int cmp(const void *a, const void *b)
 		return x->date - y->date;
 }
 
-
-struct CF_list_t
-{
-	int mid;
-	int uid;
-	int score;
-	float similarity;
-	int common;
-};
-
-struct CF_candidate_t
-{
-	int mid;
-	int score;
-	int date;
-};
-
-struct content_list_t
-{
-	int mid;
-	int score;
-	vector<double> perference; 
-};
-
-struct movie_candidate_t
-{
-	int mid;
-	float score;
-	int year;
-};
-
-struct output_list_t
-{
-	int mid;
-	float score;
-};
-CF_list_t * CF(int uid,int &size)
+CF_list_t * CF(int uid,int &return_size)
 {
 	int i,j;
 	int inner_product,len_a,len_b;
@@ -104,35 +80,35 @@ CF_list_t * CF(int uid,int &size)
 		if(similarity>0.5)
 		{
 			c_index = 0;
-			for(j=0;j<movie_total;j++)
+			for(j=0;j<total_movie;j++)
 			{				
 				if(ratingMatrix[i][j]!=0){
 					
-					candidate_list[candidate_index].mid = j;
-					candidate_list[candidate_index].score = ratingMatrix[i][j];
-					candidate_list[candidate_index].date = timeStampMatrix[i][j];
+					candidate_list[c_index].mid = j;
+					candidate_list[c_index].score = ratingMatrix[i][j];
+					candidate_list[c_index].date = timeStampMatrix[i][j];
 					c_index++;
 				}		
 			}
 			
-			qsort(candidate_list,c_index,sizeof(CF_candidate),cmp);
+			qsort(candidate_list,c_index,sizeof(CF_candidate_t),cmp);
 			for(j=0;j<min(c_index,10);j++)
 			{
 				if(index==size){
-					output_size+=100;
-					output_list = realloc(output_list,sizeof(CF_list_t)*size);
+					size+=100;
+					output_list = (CF_list_t *)realloc(output_list,sizeof(CF_list_t)*size);
 				}
 				output_list[index].mid = candidate_list[j].mid;
 				output_list[index].uid = i;
 				output_list[index].score = candidate_list[j].score;
 				output_list[index].similarity = similarity;
-				output_list[index].common = common[i];
+				output_list[index].common = common_movie[i];
 				index++;
 			}
 		}					
 
 	}
-	size = index;
+	return_size = index;
 	return output_list;
 }
 
@@ -140,7 +116,7 @@ bool movie_cmp(movie_candidate_t a,movie_candidate_t b)
 {
 	return a.score<b.score;
 }
-void scan_and_pick(int pid,content_list_t* list, int &index, int quota)
+void scan_and_pick(int pid,content_list_t* list, int &index, int quota,int uid)
 {
 	int i,j;
 	vector<movie_candidate_t> movie_list;
@@ -150,7 +126,8 @@ void scan_and_pick(int pid,content_list_t* list, int &index, int quota)
 			if(movieArr[i].genre[j]==pid){
 				movie_candidate_t tmp;
 				tmp.mid = i;
-				tmp.score = rating;
+				tmp.score = movieArr[i].rating;
+				if(ratingMatrix[uid][i]==0)
 				movie_list.push_back(tmp);
 				break;
 			}	
@@ -158,11 +135,11 @@ void scan_and_pick(int pid,content_list_t* list, int &index, int quota)
 		for(j=0;j<min(quota,movie_list.size());j++)
 		{
 			if(index>=output_size*5){
-				break
+				break;
 			}
 			list[index].mid = movie_list[j].mid;
 			list[index].score = movie_list[j].score;
-			list[index].preference = movieArr[j].perference;
+			list[index].preference = movieArr[j].genre;
 			index++;
 		}
 		
@@ -172,15 +149,16 @@ void scan_and_pick(int pid,content_list_t* list, int &index, int quota)
 content_list_t * content_filter(int uid,int &size)
 {
 	content_list_t* output_list;
-	output_list = malloc(sizeof(content_list_t)*5*output_size);
+	output_list = (content_list_t *)malloc(sizeof(content_list_t)*5*output_size);
 	int index=0;
-	vector<double> preference = userArr[uid].perference;
+	vector<double> preference = userArr[uid].preference;
 
 	int i;
+	int quota;
 	for(i=0;i<preference.size();i++){
 
 		quota = ceil(5*output_size*preference[i]);
-		scan_pick(i,output_list,index,quota);
+		scan_and_pick(i,output_list,index,quota,uid);
 	}
 	size = index;
 	return output_list;
@@ -191,15 +169,14 @@ bool compOutput(output_list_t a,output_list_t b)
 	return a.score<b.score;
 }
 
-
-void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int, content_len, int n)
+void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int content_len, int n)
 {
-	output_list * output_list;
-	output_list = malloc(sizeof(output_list_t)*output_size);
+	output_list_t * output_list;
+	output_list = (output_list_t *)malloc(sizeof(output_list_t)*output_size);
 	int rec_count[total_movie];
 	memset(rec_count,0,sizeof(rec_count));
 		
-	lambda = 0.8;
+	float lambda = 0.8;
 	map<int,float> movieScore;
 	int i;
 
@@ -212,12 +189,12 @@ void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int,
 		if(movieScore.count(mid)==0)
 		{
 			rec_count[mid]++;
-			movieScore[mid]=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].avg/sqrt(userArr[tmp.uid].var))*(1.0/rec_count[mid]);
+			movieScore[mid]=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].average/sqrt(userArr[tmp.uid].variant))*(1.0/rec_count[mid]);
 		}
 		else
 		{
 			rec_count[mid]++;
-			movieScore[mid]+=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].avg/sqrt(userArr[tmp.uid].var))*(1.0/rec_count[mid]);
+			movieScore[mid]+=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].average/sqrt(userArr[tmp.uid].variant))*(1.0/rec_count[mid]);
 		}
 	}
 	
@@ -228,10 +205,10 @@ void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int,
 		mid = content_list[i].mid;
 		int j;
 		int pid;
-		for(j=0;j<content_list[i].size();j++)
+		for(j=0;j<content_list[i].preference.size();j++)
 		{
 			pid = content_list[i].preference[j];
-			preference += userArr[u].perference[pid];	
+			preference += userArr[n].preference[pid];	
 		}
 		if(movieScore.count(mid)==0)
 		{
@@ -246,7 +223,7 @@ void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int,
 		output_list_t outputNode;
 		outputNode.mid = it->first;
 		outputNode.score = it->second;
-		output.push_back()
+		output.push_back(outputNode);
 	}
 	sort(output.begin(),output.end(),compOutput);
 
