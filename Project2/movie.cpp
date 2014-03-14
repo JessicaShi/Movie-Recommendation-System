@@ -4,44 +4,21 @@
 #include<algorithm>
 #include<vector>
 #include<unordered_map>
+#include "movie.h"
 using namespace std;
 
 int test = 0;
-
-struct ratings{
-	ratings(){}
-	ratings(int m_userID, int m_movieID, int m_rating, int m_timestamp):userID(m_userID), movieID(m_movieID), rating(m_rating), timeStamp(m_timestamp){}
-	int userID;
-	int movieID;
-	int rating;
-	int timeStamp;
-};
-
+const int ROW = 6040;
+const int COL = 3900;
+int ratingMatrix[ROW][COL];  //sotores which user watches which movie and the movie rating from the user;
+int timeStampMatrix[ROW][COL];
+ratings ratingArr[1000209];  //helper array
+movieData movieArr[3900];   //store all the 3900 movies information
+userData userArr[6040];
+int userIDArr[6040];       //store the number of movies each user watched
 unordered_map<string, int> MovieGenreMap;
 
 
-struct userData{
-	userData(){};
-	userData(int m_userID, int m_age, int m_gender, vector<double>& m_preference, double m_average, double m_variant) :userID(m_userID), age(m_age), gender(m_gender), preference(m_preference),
-	average(m_average), variant(m_variant){}
-	       
-	int userID;
-	int age;
-	int gender;        //0 is male, 1 is female;
-	vector<double> preference;
-	double average;
-	double variant;
-};
-
-struct movieData{
-	movieData(){};
-	movieData(int m_movieID, string m_title, int m_year, vector<int>& m_genre, double m_rating) :movieID(m_movieID), genre(m_genre), title(m_title), year(m_year), rating(m_rating){}
-	int movieID;
-	vector<int> genre;
-	string title;
-	int year;
-	double rating;
-};
 void buildMovieGenereMap(){
 	int count = 0;
 	MovieGenreMap.insert(pair<string, int>("Action", count++));
@@ -180,16 +157,6 @@ vector<int> getMovieType(string& s){
 
 
 }
-
-const int ROW = 6040;
-const int COL = 3900;
-int ratingMatrix[ROW][COL];  //sotores which user watches which movie and the movie rating from the user;
-int timeStampMatrix[ROW][COL]; 
-ratings ratingArr[1000209];  //helper array
-movieData movieArr[3900];   //store all the 3900 movies information
-userData userArr[6040];    
-int userIDArr[6040];       //store the number of movies each user watched
-
 void initializeUserIDArr(){
 	ifstream fin;
 	string line;
@@ -447,6 +414,17 @@ int main()
 	cout << "MovieArr successfully initialized" << endl;
 	initializeUserDataArr();
 	cout << "UserDataArr successfully initialized" << endl;
-
-	cin.get();
+	
+	int i;
+	int CF_size,content_size;
+	CF_list_t * CF_list;
+	content_list_t * content_list;
+	for(i=0;i<total_user;i++)
+	{
+		CF_list = CF(i,CF_size);
+		content_list = content_filter(i,content_size);
+		filter(CF_list,CF_size,content_list,content_size,i);
+	}
+	return 0;
+//	cin.get();
 }
