@@ -36,8 +36,8 @@ int min(int a ,int b)
 int cmp(const void *a, const void *b)
 {
 	CF_candidate_t *x,*y;
-	x = *(CF_candidate_t **)a;
-	y = *(CF_candidate_t **)b;
+	x = (CF_candidate_t *)a;
+	y = (CF_candidate_t *)b;
 	
 	if(x->score!=y->score)
 		return x->score - y->score;
@@ -67,7 +67,7 @@ CF_list_t * CF(int uid,int &return_size)
 
 		for(j=0;j<total_movie;j++)
 		{
-			if(ratingMatrix[i][j]!=0&&ratingMatrix[uid][j]!=0)
+			if(ratingMatrix[i][j]!=-1&&ratingMatrix[uid][j]!=-1)
 			{
 				inner_product += ratingMatrix[i][j]*ratingMatrix[uid][j];
 				len_a += sqr(ratingMatrix[uid][j]);
@@ -82,7 +82,7 @@ CF_list_t * CF(int uid,int &return_size)
 			c_index = 0;
 			for(j=0;j<total_movie;j++)
 			{				
-				if(ratingMatrix[i][j]!=0){
+				if(ratingMatrix[i][j]!=-1){
 					
 					candidate_list[c_index].mid = j;
 					candidate_list[c_index].score = ratingMatrix[i][j];
@@ -127,12 +127,13 @@ void scan_and_pick(int pid,content_list_t* list, int &index, int quota,int uid)
 				movie_candidate_t tmp;
 				tmp.mid = i;
 				tmp.score = movieArr[i].rating;
-				if(ratingMatrix[uid][i]==0)
+				if(ratingMatrix[uid][i]==-1)
 				movie_list.push_back(tmp);
 				break;
-			}	
-		sort(movie_list.begin(),movie_list.end(),movie_cmp);
-		for(j=0;j<min(quota,movie_list.size());j++)
+			}
+	}	
+	sort(movie_list.begin(),movie_list.end(),movie_cmp);
+	for(j=0;j<min(quota,movie_list.size());j++)
 		{
 			if(index>=output_size*5){
 
@@ -144,7 +145,7 @@ void scan_and_pick(int pid,content_list_t* list, int &index, int quota,int uid)
 			index++;
 		}
 		
-	}
+	
 }
 
 content_list_t * content_filter(int uid,int &size)
@@ -190,11 +191,15 @@ void filter(CF_list_t * CF_list, int CF_len, content_list_t * content_list, int 
 		tmp = CF_list[i];
 		if(movieScore.count(mid)==0)
 		{
+			cout<<userArr[n].total<<endl;
+			cout<<userArr[tmp.uid].variant<<endl;
 			rec_count[mid]++;
 			movieScore[mid]=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].average/sqrt(userArr[tmp.uid].variant))*(1.0/rec_count[mid]);
 		}
 		else
 		{
+			cout<<userArr[n].total<<endl;
+			cout<<userArr[tmp.uid].variant<<endl;
 			rec_count[mid]++;
 			movieScore[mid]+=lambda*tmp.similarity*(tmp.common/userArr[n].total)*(tmp.score-userArr[tmp.uid].average/sqrt(userArr[tmp.uid].variant))*(1.0/rec_count[mid]);
 		}

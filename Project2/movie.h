@@ -75,7 +75,7 @@ extern ratings ratingArr[1000209];  //helper array
 extern movieData movieArr[3900];   //store all the 3900 movies information
 extern userData userArr[6040];
 extern int userIDArr[6040];       //store the number of movies each user watched
-
+extern int ratingMatrixPrediction[6040][3900]; 
 
 const int total_user		= 6040;
 const int total_movie		= 3900;

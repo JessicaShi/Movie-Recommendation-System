@@ -17,7 +17,7 @@ movieData movieArr[3900];   //store all the 3900 movies information
 userData userArr[6040];
 int userIDArr[6040];       //store the number of movies each user watched
 unordered_map<string, int> MovieGenreMap;
-
+int ratingMatrixPrediction[ROW][COL]; 
 
 void buildMovieGenereMap(){
 	int count = 0;
@@ -210,6 +210,7 @@ void initializeRatingMatrix(){
 	for (int i = 0; i < ROW; i++){
 		for (int j = 0; j < COL; j++){
 			ratingMatrix[i][j] = -1;
+			ratingMatrixPrediction[i][j]=-1;
 		}
 		
 	}
