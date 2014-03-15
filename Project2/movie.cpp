@@ -22,8 +22,8 @@ unordered_map<string, int> MovieGenreMap;
 
 struct userData{
 	userData(){};
-	userData(int m_userID, int m_age, int m_gender, vector<double>& m_preference, double m_average, double m_variant) :userID(m_userID), age(m_age), gender(m_gender), preference(m_preference),
-	average(m_average), variant(m_variant){}
+	userData(int m_userID, int m_age, int m_gender, vector<double>& m_preference, double m_average, double m_variant, int m_total) :userID(m_userID), age(m_age), gender(m_gender), preference(m_preference),
+	average(m_average), variant(m_variant), total(m_total){}
 	       
 	int userID;
 	int age;
@@ -31,6 +31,7 @@ struct userData{
 	vector<double> preference;
 	double average;
 	double variant;
+	int total;
 };
 
 struct movieData{
@@ -190,6 +191,7 @@ movieData movieArr[3900];   //store all the 3900 movies information
 userData userArr[6040];    
 int userIDArr[6040];       //store the number of movies each user watched
 int ratingMatrixPrediction[ROW][COL]; 
+int timeStampMatrixPrediction[ROW][COL];
 
 void initializeUserIDArr(){
 	ifstream fin;
@@ -279,7 +281,7 @@ void initializeRatingMatrix(){
 		}
 		for (; j < userIDArr[i]; j++){
 			ratingMatrixPrediction[i][ratingArr[k].movieID - 1] = ratingArr[k].rating;
-			timeStampMatrix[i][ratingArr[k].movieID - 1] = ratingArr[k].timeStamp; 
+			timeStampMatrixPrediction[i][ratingArr[k].movieID - 1] = ratingArr[k].timeStamp; 
 			k++;
 		}
 	}
@@ -391,7 +393,7 @@ vector<double> getPreference(int userID){
 
 }
 
-void getAverage(int userID, double& average, double& variant){
+void getAverage(int userID, double& average, double& variant, int& m_total){
 	int total = 0;
 	int count = 0;
 	vector<int> ratings;
@@ -404,10 +406,12 @@ void getAverage(int userID, double& average, double& variant){
 
 		}
 	}
-	average = total / count;
+	average = double(total) / count;
+	m_total = count;
 	for (int i = 0; i < ratings.size(); i++){
 		variant = pow((ratings[i] - average), 2);
 	}
+	
 
 }
 
@@ -424,17 +428,19 @@ void initializeUserDataArr(){
 		int userID = getUserID2(line);
 		int gender = getGender(line);
 		int age = getAge(line);
+		int total = 0;
 		vector<double> preference = getPreference(userID);
 		double average;
 		double variant;
-		getAverage(userID, average, variant);
-		userArr[i++] = userData(userID, gender, age, preference, average, variant);
+		getAverage(userID, average, variant, total);
+		userArr[i++] = userData(userID, gender, age, preference, average, variant, total);
 		if (test){
 			cout << "userID: " <<userID << "gender: " <<gender<< "age: "<<age<<" " <<"perference: ";
 			for (int i = 0; i < preference.size(); i++){
 				cout << preference[i] << ",";
 			}
-			cout <<"average: "<<average << "variant :" << variant << endl;
+			cout << "average: " << average << "variant :" << variant;
+			cout << " total:" << total << endl;
 		}
 
 	}
